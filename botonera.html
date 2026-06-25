@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔊 BOTONERA 🔊</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --accent: #e94560;
+    --text: #eaeaea;
+    --text2: #a0a0b0;
+    --border: rgba(255,255,255,0.1);
+    --btn-size: 120px;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 { font-size: 18px; font-weight: 600; margin-right: auto; }
+  .toolbar-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .toolbar-btn:hover { background: rgba(255,255,255,0.15); }
+  .toolbar-btn.danger { border-color: #e94560; color: #e94560; }
+  .toolbar-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .toolbar-btn.primary:hover { background: #c73652; }
+  select.toolbar-select {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  select.toolbar-select option { background: #222; }
+  .size-slider { width: 80px; accent-color: var(--accent); }
+  main { padding: 20px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--btn-size), 1fr));
+    gap: 12px;
+  }
+  .sound-btn {
+    position: relative;
+    --btn-bg: #e94560;
+    border-radius: var(--radius);
+    aspect-ratio: 1;
+    width: 100%;
+    min-height: 70px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 10px 8px;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--btn-bg), white 25%) 0%,
+      var(--btn-bg) 48%,
+      color-mix(in srgb, var(--btn-bg), black 22%) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.35),
+      inset 0 -6px 10px rgba(0,0,0,0.22),
+      0 5px 0 rgba(0,0,0,0.45),
+      0 9px 14px rgba(0,0,0,0.35);
+    transform: translateY(0);
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, filter 0.08s ease-out;
+    user-select: none;
+    overflow: hidden;
+    word-break: break-word;
+    text-align: center;
+  }
+  .sound-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      inset 0 -6px 10px rgba(0,0,0,0.2),
+      0 7px 0 rgba(0,0,0,0.45),
+      0 13px 18px rgba(0,0,0,0.4);
+  }
+  .sound-btn:active {
+    transform: translateY(4px);
+    filter: brightness(0.95);
+    box-shadow:
+      inset 0 2px 4px rgba(0,0,0,0.35),
+      0 1px 0 rgba(0,0,0,0.45),
+      0 2px 4px rgba(0,0,0,0.3);
+  }
+  .sound-btn.playing {
+    transform: translateY(3px);
+    animation: btnPulse 0.9s ease-in-out infinite;
+    box-shadow:
+      inset 0 2px 4px rgba(0,0,0,0.3),
+      0 2px 0 rgba(0,0,0,0.45),
+      0 0 0 3px rgba(255,255,255,0.85),
+      0 0 20px 4px var(--btn-bg);
+  }
+  .sound-btn.paused {
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 2px 4px rgba(0,0,0,0.3),
+      0 2px 0 rgba(0,0,0,0.45),
+      0 0 0 3px rgba(255,209,102,0.9),
+      0 0 14px 2px rgba(255,209,102,0.5);
+  }
+  @keyframes btnPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.18); }
+  }
+  .sound-btn.dragging { opacity: 0.4; border: 2px dashed rgba(255,255,255,0.5); }
+  .sound-btn.drag-over { border: 2px dashed #fff; }
+  .btn-icon { font-size: 22px; text-shadow: 0 2px 3px rgba(0,0,0,0.4); }
+  .btn-label {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+    max-height: 3.9em;
+    overflow: hidden;
+    color: inherit;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .btn-controls {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: none;
+    gap: 3px;
+  }
+  .sound-btn:hover .btn-controls { display: none }
+  .btn-ctrl {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    transition: background 0.1s;
+  }
+  .btn-ctrl:hover { background: rgba(0,0,0,0.8); }
+  .btn-ctrl.del:hover { background: #e94560; }
+  .add-btn {
+    border: 2px dashed rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.03);
+    border-radius: var(--radius);
+    min-height: var(--btn-size);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 28px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .add-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.4); color: #fff; }
+  .add-btn span { font-size: 11px; margin-top: 4px; }
+  .volume-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.5);
+    width: 0%;
+    transition: width 0.1s;
+  }
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #1e1e2e;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    width: min(480px, 95vw);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 { font-size: 16px; margin-bottom: 18px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+  .form-group input, .form-group select {
+    width: 100%;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  .form-group input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .color-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .color-swatch {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.1s;
+  }
+  .color-swatch:hover, .color-swatch.selected { transform: scale(1.15); border-color: #fff; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .presets-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .preset-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.1s;
+  }
+  .preset-item:hover { background: rgba(255,255,255,0.07); }
+  .preset-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 9999;
+    transition: transform 0.3s;
+    pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  .search-box {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    width: 160px;
+  }
+  .search-box::placeholder { color: var(--text2); }
+  .search-box:focus { outline: 2px solid var(--accent); }
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    border-left: 1px solid var(--border);
+  }
+  .toolbar-group:first-of-type { border-left: none; }
+  .resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 14px;
+    height: 14px;
+    cursor: nwse-resize;
+    opacity: 0.3;
+    transition: opacity 0.15s;
+  }
+  .resize-handle::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--text2);
+    border-bottom: 2px solid var(--text2);
+  }
+  .resize-handle:hover { opacity: 0.8; }
+  .category-module {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-height: 200px;
+    max-height: 460px;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  .category-module.drag-over {
+    border-color: var(--accent);
+    background: rgba(233, 69, 96, 0.1);
+  }
+  .category-module.dragging {
+    opacity: 0.4;
+    border: 2px dashed rgba(255,255,255,0.5);
+  }
+  .category-module-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .category-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s;
+    flex: 1;
+  }
+  .category-title:hover { background: rgba(255,255,255,0.08); }
+  .category-title.editing {
+    background: rgba(255,255,255,0.15);
+    outline: 2px solid var(--accent);
+  }
+  .category-title-input {
+    font-size: 13px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid var(--accent);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 6px;
+    width: 120px;
+    flex: 1;
+  }
+  .category-count {
+    font-size: 11px;
+    color: var(--text2);
+    background: rgba(255,255,255,0.08);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .category-actions { display: flex; gap: 2px; }
+  .cat-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+    transition: background 0.1s;
+  }
+  .cat-btn:hover { background: rgba(255,255,255,0.2); }
+  .cat-btn.del:hover { background: #e94560; }
+  .category-sounds {
+    padding-right: 1em;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--btn-size), 1fr));
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  .category-empty {
+    color: var(--text2);
+    font-size: 11px;
+    text-align: center;
+    padding: 20px 8px;
+    border: 2px dashed rgba(255,255,255,0.1);
+    border-radius: 8px;
+    margin-top: 4px;
+  }
+  .context-menu {
+    position: fixed;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 0;
+    min-width: 160px;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  .context-menu-item {
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .context-menu-item:hover { background: rgba(255,255,255,0.1); }
+  .context-menu-item.danger:hover { background: rgba(233, 69, 96, 0.3); color: #e94560; }
+  .context-menu-separator {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔊 Mi Botonera</h1>
+  <div class="toolbar-group">
+    <input class="search-box" id="searchBox" type="search" placeholder="🔍 Buscar...">
+    <label style="font-size:12px;color:var(--text2)">Tamaño</label>
+    <input class="size-slider" type="range" min="80" max="200" value="120" id="sizeSlider">
+    <select class="toolbar-select" id="sortSelect">
+      <option value="custom">Orden personalizado</option>
+      <option value="az">A → Z</option>
+      <option value="za">Z → A</option>
+    </select>
+  </div>
+  <div class="toolbar-group">
+    <select class="toolbar-select" id="catFilter">
+      <option value="all">Todas las categorías</option>
+    </select>
+    <button class="toolbar-btn" id="addCatBtn" onclick="addCategory()">➕ Nueva categoría</button>
+  </div>
+  <div class="toolbar-group">
+    <label style="font-size:12px;color:var(--text2)">Modo</label>
+    <select class="toolbar-select" id="modeSelect" title="Modo de reproducción">
+      <option value="burst">🎯 Burst (superpone sonidos)</option>
+      <option value="pp">⏯ Play/Pausa</option>
+      <option value="ott">🔁 OTT (uno a la vez por botón)</option>
+    </select>
+    <button class="toolbar-btn" onclick="openAddModal()">➕ Agregar sonido</button>
+    <button class="toolbar-btn" onclick="stopAll()">⏹ Parar todo</button>
+    <button class="toolbar-btn" id="modBtn" onclick="toggleModulation()">🔊 Modulación</button>
+    <label style="font-size:12px;color:var(--text2)">Transp</label>
+    <input class="size-slider" type="range" min="20" max="100" value="100" id="transpSlider">
+  </div>
+  <div class="toolbar-group">
+    <button class="toolbar-btn" onclick="exportConfig()">⚙️ Exportar config</button>
+    <button class="toolbar-btn" onclick="document.getElementById('importFile').click()">📂 Importar</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<!-- Modal agregar/editar -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2 id="modalTitle">Agregar sonido</h2>
+    <div class="form-group">
+      <label>Nombre del botón</label>
+      <input id="fName" type="text" placeholder="Ej: Aplausos">
+    </div>
+    <div class="form-group">
+      <label>URL del sonido (Myinstants u otro mp3)</label>
+      <input id="fUrl" type="text" placeholder="https://www.myinstants.com/media/sounds/...mp3">
+    </div>
+    <div class="form-group">
+      <label>Emoji / ícono</label>
+      <input id="fEmoji" type="text" placeholder="🔊" maxlength="4" style="width:80px">
+    </div>
+    <div class="form-group">
+      <label>Color del botón</label>
+      <div class="color-row" id="colorSwatches"></div>
+      <input id="fColor" type="color" value="#e94560" style="margin-top:8px;width:50px;height:32px;border-radius:6px;border:none;cursor:pointer">
+    </div>
+    <div class="form-group">
+      <label>Color del texto</label>
+      <input id="fTextColor" type="color" value="#ffffff" style="width:50px;height:32px;border-radius:6px;border:none;cursor:pointer">
+    </div>
+    <div class="form-group">
+      <label>Categoría</label>
+      <select id="fCategory" class="toolbar-select" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:14px;">
+        <option value="">Sin categoría</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>📋 Presets de Myinstants (tus favoritos)</label>
+      <div class="presets-list" id="presetsList"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="toolbar-btn" onclick="closeModal()">Cancelar</button>
+      <button class="toolbar-btn primary" onclick="saveSound()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const COLORS = [
+  '#e94560','#ff6b6b','#ffd166','#06d6a0','#118ab2','#7b2d8b',
+  '#ff9f43','#00b894','#6c5ce7','#fd79a8','#0984e3','#2d3436',
+  '#e17055','#00cec9','#a29bfe','#55efc4','#fdcb6e','#636e72',
+  '#d63031','#74b9ff','#81ecec','#fab1a0','#dfe6e9','#b2bec3',
+];
+
+const PRESETS = [
+    {name:"\"Encara Messi\"","url":"https://www.myinstants.com/media/sounds/gol-messi-vs-getafe-narrat-per-puyal-full-hd-1080p-audiotrimmer.mp3","color":"#2727FF","emoji":"⚽"},
+    {name:"1500 es hora y media","url":"https://www.myinstants.com/media/sounds/1500-es-hora-y-media.mp3","color":"#FF0000","emoji":"📻"},
+    {name:"Foca aplaudiendo","url":"foca.mp3","color":"#00BFFF","emoji":"🦭"},
+    {name:"Yo soy maluma","url":"https://www.myinstants.com/media/sounds/yo-soy-maluma_dyTz9hR.mp3","color":"#FFF949","emoji":"🎤"},
+    {name:"YOU BITCH!!","url":"https://www.myinstants.com/media/sounds/you-bitch_s7TpHlz.mp3","color":"#FF0000","emoji":"😡"}
+  ];  
+
+let sounds = [];
+let editingIndex = null;
+let dragSrcIndex = null;
+let playingAudios = []; // {audio, btn, idx} entries currently playing (not paused)
+let buttonAudio = new Map(); // idx -> {audio, btn, idx} — the "current" controllable instance per button, used in pp/ott modes
+let playbackMode = localStorage.getItem('botonera_mode') || 'burst'; // 'burst' | 'pp' | 'ott'
+let categories = [];
+
+const LS_KEY_SOUNDS = 'botonera_sounds';
+const LS_KEY_CATEGORIES = 'botonera_categories';
+
+const DEFAULT_CATEGORIES = [
+  { id: 1, name: 'RISAS' },
+  { id: 2, name: 'TV/SHOW/CINE' },
+  { id: 3, name: 'APLAUSOS CELEBRACIONES' },
+  { id: 4, name: 'ANIMALS' },
+  { id: 5, name: 'ELECTRONICS' },
+  { id: 6, name: 'CARS' },
+  { id: 7, name: 'DEVICES' },
+  { id: 8, name: 'MUSIC' },
+  { id: 9, name: 'REGIONAL' },
+  { id: 10, name: 'INSULTOS' },
+];
+
+function loadSounds() {
+  const saved = localStorage.getItem(LS_KEY_SOUNDS);
+  if (saved) {
+    sounds = JSON.parse(saved);
+  } else {
+    sounds = PRESETS.slice(0, 30).map(p => ({...p}));
+  }
+  const savedCats = localStorage.getItem(LS_KEY_CATEGORIES);
+  if (savedCats) {
+    categories = JSON.parse(savedCats);
+  } else {
+    categories = DEFAULT_CATEGORIES.slice();
+    saveCategories();
+  }
+}
+
+function saveSounds() {
+  localStorage.setItem(LS_KEY_SOUNDS, JSON.stringify(sounds));
+}
+
+function saveCategories() {
+  localStorage.setItem(LS_KEY_CATEGORIES, JSON.stringify(categories));
+}
+
+function addCategory() {
+  const name = prompt('Nombre de la nueva categoría:');
+  if (!name) return;
+  categories.push({ id: Date.now(), name: name.trim() });
+  saveCategories();
+  buildCategoryFilter();
+  renderGrid();
+}
+
+function deleteCategory(id) {
+  if (!confirm('¿Eliminar esta categoría? Los sonidos se moverán a "Sin categoría".')) return;
+  sounds.forEach(s => { if (s.category === id) delete s.category; });
+  categories = categories.filter(c => c.id !== id);
+  saveCategories();
+  saveSounds();
+  buildCategoryFilter();
+  renderGrid();
+}
+
+function startEditCategory(el, id) {
+  const cat = categories.find(c => c.id === id);
+  if (!cat) return;
+  el.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'category-title-input';
+  input.value = cat.name;
+  el.parentElement.insertBefore(input, el.nextSibling);
+  input.focus();
+  input.select();
+  const finish = () => {
+    const newName = input.value.trim();
+    if (newName) {
+      cat.name = newName;
+      saveCategories();
+    }
+    input.remove();
+    el.style.display = '';
+    renderGrid();
+  };
+  input.addEventListener('blur', finish);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') finish();
+    if (e.key === 'Escape') { input.remove(); el.style.display = ''; }
+  });
+}
+
+function buildCategoryFilter() {
+  const sel = document.getElementById('catFilter');
+  const modalSel = document.getElementById('fCategory');
+  sel.innerHTML = '<option value="all">Todas las categorías</option>';
+  modalSel.innerHTML = '<option value="">Sin categoría</option>';
+  categories.forEach(c => {
+    sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+    modalSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+  });
+}
+
+function getCategoryName(id) {
+  const cat = categories.find(c => c.id === id);
+  return cat ? cat.name : null;
+}
+
+let audioCtx = null;
+let masterGain = null;
+let modulationEnabled = false;
+let transparency = 100;
+
+function initAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.connect(audioCtx.destination);
+    masterGain.gain.value = 0.85;
+  }
+}
+
+function normalizeAudio(audio) {
+  initAudioCtx();
+  const source = audioCtx.createMediaElementSource(audio);
+  const gainNode = audioCtx.createGain();
+  gainNode.gain.value = 0.85;
+  source.connect(gainNode);
+  gainNode.connect(masterGain);
+}
+
+function toggleModulation() {
+  modulationEnabled = !modulationEnabled;
+  const btn = document.getElementById('modBtn');
+  btn.style.background = modulationEnabled ? 'var(--accent)' : 'rgba(255,255,255,0.08)';
+  btn.style.color = modulationEnabled ? '#fff' : 'var(--text)';
+  if (modulationEnabled) {
+    initAudioCtx();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+  toast(modulationEnabled ? '🔊 Modulación activada' : '🔇 Modulación desactivada');
+}
+
+function getTextColor(bg) {
+  const hex = bg.replace('#','');
+  const r = parseInt(hex.substr(0,2),16);
+  const g = parseInt(hex.substr(2,2),16);
+  const b = parseInt(hex.substr(4,2),16);
+  const lum = (0.299*r + 0.587*g + 0.114*b)/255;
+  return lum > 0.55 ? '#1a1a1a' : '#ffffff';
+}
+
+let contextMenuTargetIndex = null;
+let dragSrcCatId = null;
+
+function showContextMenu(e, idx) {
+  e.preventDefault();
+  hideContextMenu();
+  contextMenuTargetIndex = idx;
+  let menu = document.getElementById('ctxMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'ctxMenu';
+    menu.className = 'context-menu';
+    document.body.appendChild(menu);
+  }
+  menu.innerHTML = `
+    <div class="context-menu-item" onclick="ctxEdit()">✏️ Editar</div>
+    <div class="context-menu-item" onclick="ctxDelete()">🗑 Eliminar</div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-item" onclick="ctxMovePrompt()">➕ Agregar a categoría</div>
+  `;
+  menu.style.display = 'block';
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 100) + 'px';
+}
+
+function hideContextMenu() {
+  const menu = document.getElementById('ctxMenu');
+  if (menu) menu.style.display = 'none';
+}
+
+function ctxEdit() {
+  if (contextMenuTargetIndex !== null) openEditModal(contextMenuTargetIndex);
+  hideContextMenu();
+}
+
+function ctxDelete() {
+  if (contextMenuTargetIndex !== null) deleteSound(contextMenuTargetIndex);
+  hideContextMenu();
+}
+
+function ctxMovePrompt() {
+  if (contextMenuTargetIndex === null) return hideContextMenu();
+  const items = categories.map(c => `${c.id}:${c.name}`).join('|');
+  const catId = prompt('ID de categoría (' + items + '):');
+  if (catId) {
+    sounds[contextMenuTargetIndex].category = parseInt(catId);
+    saveSounds();
+    renderGrid();
+  }
+  hideContextMenu();
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('ctxMenu');
+  if (menu && !menu.contains(e.target)) hideContextMenu();
+});
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+  const catFilter = document.getElementById('catFilter').value;
+  let list = [...sounds];
+  if (catFilter !== 'all') list = list.filter(s => s.category === parseInt(catFilter));
+  if (search) list = list.filter(s => s.name.toLowerCase().includes(search));
+  if (sort === 'az') list = list.slice().sort((a,b) => a.name.localeCompare(b.name));
+  if (sort === 'za') list = list.slice().sort((a,b) => b.name.localeCompare(a.name));
+
+  if (catFilter !== 'all') {
+    grid.innerHTML = '';
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(var(--btn-size), 1fr))';
+    list.forEach((s) => {
+      const realIdx = sounds.indexOf(s);
+      renderSoundBtn(grid, s, realIdx);
+    });
+    const addDiv = document.createElement('div');
+    addDiv.className = 'add-btn';
+    addDiv.innerHTML = '➕<span>Agregar</span>';
+    addDiv.onclick = openAddModal;
+    grid.appendChild(addDiv);
+    return;
+  }
+
+  // Render categories as modules
+  grid.innerHTML = '';
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+  grid.style.gap = '16px';
+
+  // Uncategorized - top, full width
+  const uncategorized = list.filter(s => !s.category);
+  const uncatMod = document.createElement('div');
+  uncatMod.className = 'category-module';
+  uncatMod.style.gridColumn = '1 / -1';
+
+  const uncatHeader = document.createElement('div');
+  uncatHeader.className = 'category-module-header';
+  uncatHeader.innerHTML = `<span class="category-title">Sin categoría</span><span class="category-count">${uncategorized.length}</span>`;
+  uncatMod.appendChild(uncatHeader);
+
+  const uncatSoundsDiv = document.createElement('div');
+  uncatSoundsDiv.className = 'category-sounds';
+  uncategorized.forEach(s => {
+    const realIdx = sounds.indexOf(s);
+    renderSoundBtn(uncatSoundsDiv, s, realIdx);
+  });
+
+  if (uncategorized.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'category-empty';
+    empty.textContent = 'Arrastra sonidos aquí';
+    uncatSoundsDiv.appendChild(empty);
+  }
+
+  uncatMod.appendChild(uncatSoundsDiv);
+  const uncatResize = document.createElement('div');
+  uncatResize.className = 'resize-handle';
+  uncatResize.addEventListener('mousedown', e => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = uncatMod.offsetHeight;
+    function onMove(ev) {
+      uncatMod.style.height = Math.max(150, startH + ev.clientY - startY) + 'px';
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+  uncatMod.appendChild(uncatResize);
+
+  uncatMod.addEventListener('dragover', e => {
+    e.preventDefault();
+    uncatMod.classList.add('drag-over');
+  });
+  uncatMod.addEventListener('dragleave', () => uncatMod.classList.remove('drag-over'));
+  uncatMod.addEventListener('drop', e => {
+    e.preventDefault();
+    uncatMod.classList.remove('drag-over');
+    if (dragSrcIndex !== null) {
+      delete sounds[dragSrcIndex].category;
+      saveSounds();
+      renderGrid();
+    }
+  });
+  grid.appendChild(uncatMod);
+
+  categories.forEach((cat, catIdx) => {
+    const catSounds = list.filter(s => s.category === cat.id);
+
+    const mod = document.createElement('div');
+    mod.className = 'category-module';
+    mod.dataset.catId = cat.id;
+    mod.draggable = true;
+
+    const header = document.createElement('div');
+    header.className = 'category-module-header';
+    header.innerHTML = `
+      <span class="category-title" ondblclick="startEditCategory(this, ${cat.id})" title="Doble clic para editar">${cat.name}</span>
+      <span class="category-count">${catSounds.length}</span>
+      <div class="category-actions">
+        <button class="cat-btn del" title="Eliminar" onclick="deleteCategory(${cat.id})">🗑</button>
+      </div>
+    `;
+
+    mod.appendChild(header);
+
+    const soundsDiv = document.createElement('div');
+    soundsDiv.className = 'category-sounds';
+
+    catSounds.forEach((s) => {
+      const realIdx = sounds.indexOf(s);
+      renderSoundBtn(soundsDiv, s, realIdx);
+    });
+
+    if (catSounds.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'category-empty';
+      empty.textContent = 'Sin sonidos - arrastra aquí';
+      soundsDiv.appendChild(empty);
+    }
+
+    mod.appendChild(soundsDiv);
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = 'resize-handle';
+    resizeHandle.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      e.preventDefault();
+      const startX = e.clientX, startY = e.clientY;
+      const startW = mod.offsetWidth, startH = mod.offsetHeight;
+      function onMove(ev) {
+        mod.style.width = Math.max(200, startW + ev.clientX - startX) + 'px';
+        mod.style.height = Math.max(150, startH + ev.clientY - startY) + 'px';
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+    mod.appendChild(resizeHandle);
+    grid.appendChild(mod);
+
+    // Drag & drop to reorder modules
+    mod.addEventListener('dragstart', e => {
+      dragSrcCatId = cat.id;
+      mod.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    mod.addEventListener('dragend', () => {
+      mod.classList.remove('dragging');
+      dragSrcCatId = null;
+    });
+    mod.addEventListener('dragover', e => {
+      e.preventDefault();
+      mod.classList.add('drag-over');
+    });
+    mod.addEventListener('dragleave', () => mod.classList.remove('drag-over'));
+    mod.addEventListener('drop', e => {
+      e.preventDefault();
+      mod.classList.remove('drag-over');
+      if (dragSrcCatId !== null && dragSrcCatId !== cat.id) {
+        const srcIdx = categories.findIndex(c => c.id === dragSrcCatId);
+        const dstIdx = categories.findIndex(c => c.id === cat.id);
+        if (srcIdx !== -1 && dstIdx !== -1) {
+          const [moved] = categories.splice(srcIdx, 1);
+          categories.splice(dstIdx, 0, moved);
+          saveCategories();
+          renderGrid();
+        }
+      } else if (dragSrcIndex !== null) {
+        sounds[dragSrcIndex].category = cat.id;
+        saveSounds();
+        renderGrid();
+      }
+    });
+  });
+
+  const addDiv = document.createElement('div');
+  addDiv.className = 'add-btn';
+  addDiv.innerHTML = '📂<span>Nueva categoría</span>';
+  addDiv.onclick = addCategory;
+  grid.appendChild(addDiv);
+}
+
+function renderSoundBtn(container, s, realIdx) {
+  const div = document.createElement('div');
+  div.className = 'sound-btn';
+  const baseColor = s.color || '#e94560';
+  const alphaHex = Math.round(transparency * 2.55).toString(16).padStart(2, '0');
+  div.style.setProperty('--btn-bg', baseColor + alphaHex);
+  const tc = s.textColor || getTextColor(baseColor);
+  div.style.color = tc;
+  div.draggable = true;
+  div.dataset.idx = realIdx;
+
+  div.innerHTML = `
+    <div class="btn-controls">
+      <button class="btn-ctrl" title="Editar" onclick="event.stopPropagation();openEditModal(${realIdx})">✏️</button>
+      <button class="btn-ctrl del" title="Eliminar" onclick="event.stopPropagation();deleteSound(${realIdx})">🗑</button>
+    </div>
+    <div class="btn-icon">${s.emoji || '🔊'}</div>
+    <div class="btn-label">${s.name}</div>
+    <div class="volume-bar" id="vbar-${realIdx}"></div>
+  `;
+
+  div.addEventListener('click', () => playSound(s, div, realIdx));
+  div.addEventListener('contextmenu', e => showContextMenu(e, realIdx));
+  div.addEventListener('dragstart', e => { dragSrcIndex = realIdx; div.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+  div.addEventListener('dragend', () => div.classList.remove('dragging'));
+  div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('drag-over'); });
+  div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+  div.addEventListener('drop', e => {
+    e.preventDefault();
+    div.classList.remove('drag-over');
+    if (dragSrcIndex !== null && dragSrcIndex !== realIdx) {
+      const dragged = sounds[dragSrcIndex];
+      if (dragged.category !== s.category) {
+        dragged.category = s.category;
+      }
+      sounds.splice(dragSrcIndex, 1);
+      const newIdx = sounds.indexOf(s);
+      sounds.splice(newIdx + 1, 0, dragged);
+      dragSrcIndex = null;
+      saveSounds();
+      renderGrid();
+    }
+  });
+
+  // Re-attach any audio still active for this button to the freshly rendered node,
+  // so the visual playing/paused state survives a grid re-render (search/sort/filter/etc).
+  const liveSingle = buttonAudio.get(realIdx);
+  if (liveSingle) {
+    liveSingle.btn = div;
+    div.classList.toggle('paused', liveSingle.audio.paused);
+    div.classList.toggle('playing', !liveSingle.audio.paused);
+  }
+  playingAudios.filter(e => e.idx === realIdx).forEach(e => { e.btn = div; div.classList.add('playing'); });
+
+  container.appendChild(div);
+}
+
+function playSound(s, btn, idx) {
+  if (playbackMode === 'pp') return handlePP(s, btn, idx);
+  if (playbackMode === 'ott') return handleOTT(s, btn, idx);
+  return handleBurst(s, btn, idx);
+}
+
+function createAudioEntry(s, btn, idx) {
+  const audio = new Audio(s.url);
+  if (modulationEnabled) {
+    try { normalizeAudio(audio); } catch (e) { /* source may already be created */ }
+  }
+  return { audio, btn, idx };
+}
+
+function startPlayback(entry, s) {
+  playingAudios.push(entry);
+  entry.btn.classList.remove('paused');
+  entry.btn.classList.add('playing');
+  entry.audio.play().catch(() => {
+    toast(`No se pudo reproducir "${s.name}". Revisa la URL.`);
+    console.warn('Audio playback failed for', s.name, '→', s.url);
+    stopEntry(entry);
+  });
+}
+
+// BURST: every click starts a brand new, independent, overlapping instance.
+function handleBurst(s, btn, idx) {
+  const entry = createAudioEntry(s, btn, idx);
+  entry.audio.addEventListener('ended', () => stopEntry(entry));
+  entry.audio.addEventListener('error', () => {
+    toast(`No se pudo cargar "${s.name}". El servidor del audio rechazó la conexión o el archivo no existe.`);
+    console.warn('Audio load error for', s.name, '→', s.url);
+    stopEntry(entry);
+  });
+  startPlayback(entry, s);
+}
+
+// OTT (once at a time, per button): every click restarts the sound, stopping
+// whatever instance of THIS SAME button was already playing. Other buttons unaffected.
+function handleOTT(s, btn, idx) {
+  const existing = buttonAudio.get(idx);
+  if (existing) hardStopEntry(existing, idx);
+
+  const entry = createAudioEntry(s, btn, idx);
+  buttonAudio.set(idx, entry);
+  entry.audio.addEventListener('ended', () => { stopEntry(entry); buttonAudio.delete(idx); });
+  entry.audio.addEventListener('error', () => {
+    toast(`No se pudo cargar "${s.name}". El servidor del audio rechazó la conexión o el archivo no existe.`);
+    console.warn('Audio load error for', s.name, '→', s.url);
+    stopEntry(entry);
+    buttonAudio.delete(idx);
+  });
+  startPlayback(entry, s);
+}
+
+// PP (play/pause): first click plays, next click on the SAME button pauses it
+// (keeping position), next click resumes, and so on. Audio ending resets it.
+function handlePP(s, btn, idx) {
+  const existing = buttonAudio.get(idx);
+  if (existing) {
+    existing.btn = btn; // keep pointing at the live DOM node
+    if (existing.audio.paused) {
+      if (!playingAudios.includes(existing)) playingAudios.push(existing);
+      btn.classList.remove('paused');
+      btn.classList.add('playing');
+      existing.audio.play().catch(() => {
+        toast(`No se pudo reproducir "${s.name}". Revisa la URL.`);
+        console.warn('Audio playback failed for', s.name, '→', s.url);
+      });
+    } else {
+      existing.audio.pause();
+      const i = playingAudios.indexOf(existing);
+      if (i !== -1) playingAudios.splice(i, 1);
+      btn.classList.remove('playing');
+      btn.classList.add('paused');
+    }
+    return;
+  }
+
+  const entry = createAudioEntry(s, btn, idx);
+  buttonAudio.set(idx, entry);
+  entry.audio.addEventListener('ended', () => { stopEntry(entry); buttonAudio.delete(idx); });
+  entry.audio.addEventListener('error', () => {
+    toast(`No se pudo cargar "${s.name}". El servidor del audio rechazó la conexión o el archivo no existe.`);
+    console.warn('Audio load error for', s.name, '→', s.url);
+    stopEntry(entry);
+    buttonAudio.delete(idx);
+  });
+  startPlayback(entry, s);
+}
+
+function stopEntry(entry) {
+  const i = playingAudios.indexOf(entry);
+  if (i !== -1) playingAudios.splice(i, 1);
+  const stillPlaying = playingAudios.some(e => e.btn === entry.btn);
+  if (!stillPlaying) {
+    entry.btn.classList.remove('playing');
+    entry.btn.classList.remove('paused');
+  }
+}
+
+function hardStopEntry(entry, idx) {
+  entry.audio.pause();
+  entry.audio.currentTime = 0;
+  stopEntry(entry);
+  if (idx !== undefined) buttonAudio.delete(idx);
+}
+
+function setPlaybackMode(mode) {
+  playbackMode = mode;
+  localStorage.setItem('botonera_mode', mode);
+  stopAll(); // avoid confusing leftover state (e.g. a paused PP sound) when switching modes
+  const labels = { burst: '🎯 Modo Burst', pp: '⏯ Modo Play/Pausa', ott: '🔁 Modo OTT' };
+  toast(labels[mode] || mode);
+}
+
+function stopAll() {
+  playingAudios.forEach(({ audio, btn }) => {
+    audio.pause();
+    audio.currentTime = 0;
+    btn.classList.remove('playing');
+    btn.classList.remove('paused');
+  });
+  buttonAudio.forEach(entry => {
+    entry.audio.pause();
+    entry.audio.currentTime = 0;
+    entry.btn.classList.remove('playing');
+    entry.btn.classList.remove('paused');
+  });
+  playingAudios = [];
+  buttonAudio.clear();
+}
+
+function openAddModal() {
+  editingIndex = null;
+  isCategory = true;
+  document.getElementById('modalTitle').textContent = 'Agregar categoría';
+  document.getElementById('fName').value = '';
+  document.getElementById('fUrl').value = '';
+  document.getElementById('fEmoji').value = '🔊';
+  document.getElementById('fColor').value = '#e94560';
+  document.getElementById('fTextColor').value = '#ffffff';
+  document.getElementById('fCategory').value = '';
+  updateSwatchSelection('#e94560');
+  document.getElementById('editModal').classList.add('open');
+}
+
+function openEditModal(idx) {
+  editingIndex = idx;
+  const s = sounds[idx];
+  document.getElementById('modalTitle').textContent = 'Editar sonido';
+  document.getElementById('fName').value = s.name;
+  document.getElementById('fUrl').value = s.url;
+  document.getElementById('fEmoji').value = s.emoji || '🔊';
+  document.getElementById('fColor').value = s.color || '#e94560';
+  document.getElementById('fTextColor').value = s.textColor || '#ffffff';
+  document.getElementById('fCategory').value = s.category || '';
+  updateSwatchSelection(s.color || '#e94560');
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('open');
+}
+
+function saveSound() {
+  const name = document.getElementById('fName').value.trim();
+  const url = document.getElementById('fUrl').value.trim();
+  if (!name || !url) { toast('Nombre y URL son requeridos'); return; }
+  const sound = {
+    name,
+    url,
+    emoji: document.getElementById('fEmoji').value || '🔊',
+    color: document.getElementById('fColor').value,
+    textColor: document.getElementById('fTextColor').value,
+  };
+  const catVal = document.getElementById('fCategory').value;
+  if (catVal) sound.category = parseInt(catVal);
+  if (editingIndex !== null) {
+    sounds[editingIndex] = sound;
+  } else {
+    sounds.push(sound);
+  }
+  saveSounds();
+  renderGrid();
+  closeModal();
+  toast(editingIndex !== null ? 'Sonido actualizado ✓' : 'Sonido agregado ✓');
+}
+
+function deleteSound(idx) {
+  if (!confirm(`¿Eliminar "${sounds[idx].name}"?`)) return;
+  sounds.splice(idx, 1);
+  saveSounds();
+  renderGrid();
+}
+
+function buildColorSwatches() {
+  const container = document.getElementById('colorSwatches');
+  container.innerHTML = '';
+  COLORS.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch';
+    sw.style.background = c;
+    sw.dataset.color = c;
+    sw.title = c;
+    sw.onclick = () => {
+      document.getElementById('fColor').value = c;
+      const tc = getTextColor(c);
+      document.getElementById('fTextColor').value = tc;
+      updateSwatchSelection(c);
+    };
+    container.appendChild(sw);
+  });
+}
+
+function updateSwatchSelection(color) {
+  document.querySelectorAll('.color-swatch').forEach(s => {
+    s.classList.toggle('selected', s.dataset.color === color);
+  });
+}
+
+function buildPresetsList() {
+  const list = document.getElementById('presetsList');
+  list.innerHTML = '';
+  PRESETS.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'preset-item';
+    item.innerHTML = `<div class="preset-dot" style="background:${p.color}"></div><span>${p.emoji||'🔊'} ${p.name}</span>`;
+    item.onclick = () => {
+      document.getElementById('fName').value = p.name;
+      document.getElementById('fUrl').value = p.url;
+      document.getElementById('fEmoji').value = p.emoji || '🔊';
+      document.getElementById('fColor').value = p.color;
+      document.getElementById('fTextColor').value = getTextColor(p.color);
+      updateSwatchSelection(p.color);
+    };
+    list.appendChild(item);
+  });
+}
+
+function exportConfig() {
+  const config = { 
+    sounds: sounds.map(s => ({...s})), 
+    categories: categories.map(c => ({...c})) 
+  };
+  const blob = new Blob([JSON.stringify(config, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'botonera_config.json';
+  a.click();
+  toast('Configuración exportada ✓ (sonidos + categorías + layout)');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.sounds && data.categories) {
+        sounds = data.sounds;
+        categories = data.categories;
+        saveSounds();
+        saveCategories();
+        buildCategoryFilter();
+        renderGrid();
+        toast(`Importados ${sounds.length} sonidos + ${categories.length} categorías ✓`);
+      } else if (Array.isArray(data)) {
+        sounds = data;
+        saveSounds();
+        renderGrid();
+        toast(`Importados ${data.length} sonidos ✓`);
+      } else { toast('Formato inválido'); }
+    } catch { toast('Error al leer el archivo'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+document.getElementById('sizeSlider').addEventListener('input', e => {
+  document.documentElement.style.setProperty('--btn-size', e.target.value + 'px');
+});
+document.getElementById('searchBox').addEventListener('input', renderGrid);
+document.getElementById('sortSelect').addEventListener('change', renderGrid);
+document.getElementById('catFilter').addEventListener('change', renderGrid);
+document.getElementById('transpSlider').addEventListener('input', e => {
+  transparency = parseInt(e.target.value);
+  renderGrid();
+});
+document.getElementById('modeSelect').value = playbackMode;
+document.getElementById('modeSelect').addEventListener('change', e => setPlaybackMode(e.target.value));
+document.getElementById('fColor').addEventListener('input', e => updateSwatchSelection(e.target.value));
+document.getElementById('editModal').addEventListener('click', e => { if (e.target === document.getElementById('editModal')) closeModal(); });
+
+document.addEventListener('keydown', e => {
+  if (e.key.toLowerCase() !== 'q') return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+  e.preventDefault();
+  stopAll();
+});
+
+loadSounds();
+buildColorSwatches();
+buildPresetsList();
+buildCategoryFilter();
+renderGrid();
+</script>
+</body>
+</html>
